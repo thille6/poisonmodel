@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fotbollsstatistik & Oddskalkylator</title>
+    <!-- Tailwind CSS lokalt -->
+    <link rel="stylesheet" href="./dist/output.css">
+    <!-- Chart.js för stapeldiagram -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-800">Fotbollsstatistik & Oddskalkylator</h1>
+        
+        <!-- Input-formulär -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Matchdata</h2>
+            
+            <!-- xG-värden -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2 text-gray-700">xG-värden</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="homeXGF" class="block text-sm font-medium text-gray-700 mb-1">Hemmalag xG</label>
+                        <input type="number" id="homeXGF" step="0.1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="1.5">
+                    </div>
+                    <div>
+                        <label for="homeXGA" class="block text-sm font-medium text-gray-700 mb-1">Hemmalag xGA</label>
+                        <input type="number" id="homeXGA" step="0.1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="1.0">
+                    </div>
+                    <div>
+                        <label for="awayXGF" class="block text-sm font-medium text-gray-700 mb-1">Bortalag xG</label>
+                        <input type="number" id="awayXGF" step="0.1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="1.2">
+                    </div>
+                    <div>
+                        <label for="awayXGA" class="block text-sm font-medium text-gray-700 mb-1">Bortalag xGA</label>
+                        <input type="number" id="awayXGA" step="0.1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="1.3">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form och ligasnitt -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2 text-gray-700">Form och ligasnitt</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="leagueAvg" class="block text-sm font-medium text-gray-700 mb-1">Ligasnitt (mål/match)</label>
+                        <input type="number" id="leagueAvg" step="0.1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="2.7">
+                    </div>
+                    <div>
+                        <label for="homeForm" class="block text-sm font-medium text-gray-700 mb-1">Form Hemma (mål senaste 5)</label>
+                        <input type="number" id="homeForm" step="1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="6">
+                    </div>
+                    <div>
+                        <label for="awayForm" class="block text-sm font-medium text-gray-700 mb-1">Form Borta (mål senaste 5)</label>
+                        <input type="number" id="awayForm" step="1" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="5.5">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Korrelation och odds -->
+            <div class="mb-6">
+                <h3 class="text-lg font-medium mb-2 text-gray-700">Korrelation och odds</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="correlation" class="block text-sm font-medium text-gray-700 mb-1">
+                            Korrelation (0-1)
+                            <span class="inline-block ml-1 text-gray-500 cursor-help" title="Korrelation mellan hemma- och bortamål. Högre värde ger starkare samband mellan målen. 0.4 är ett bra standardvärde för fotboll.">ⓘ</span>
+                        </label>
+                        <input type="number" id="correlation" step="0.01" min="0" max="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.4">
+                        <p class="text-xs text-gray-500 mt-1">Högre värde = starkare korrelation mellan hemma- och bortamål</p>
+                    </div>
+                    <div>
+                        <label for="userOdds" class="block text-sm font-medium text-gray-700 mb-1">
+                            Ditt spelodds
+                            <span class="inline-block ml-1 text-gray-500 cursor-help" title="Ange det odds du kan få hos ditt spelbolag för att beräkna Kelly Criterion. Lämna tomt om du inte vill beräkna Kelly.">ⓘ</span>
+                        </label>
+                        <input type="number" id="userOdds" step="0.1" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="2.00" placeholder="Valfritt">
+                    </div>
+                    <div>
+                        <label for="betType" class="block text-sm font-medium text-gray-700 mb-1">Speltyp</label>
+                        <select id="betType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="home">Hemmavinst (1)</option>
+                            <option value="draw">Oavgjort (X)</option>
+                            <option value="away">Bortavinst (2)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lägg till detta fält ovanför knapparna -->
+            <div class="mb-4">
+                <label for="calculationTitle" class="block text-sm font-medium text-gray-700 mb-1">Rubrik för beräkningen</label>
+                <input type="text" id="calculationTitle" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ange en beskrivande rubrik för beräkningen">
+            </div>
+            
+            <div class="flex justify-center mt-6 space-x-4">
+                <button id="calculateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition">Beräkna</button>
+                <button id="saveBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition">Spara beräkning</button>
+                <button id="showSavedBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition">Visa sparade</button>
+            </div>
+        </div>
+
+        <!-- Resultatsektion (dold från början) -->
+        <div id="resultsSection" class="hidden">
+            <!-- Sannolikhetstabeller -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Resultatmatris -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-2 text-gray-800">Resultatmatris</h2>
+                    <p class="text-sm text-gray-600 mb-4">Visar sannolikheten för olika slutresultat i matchen</p>
+                    <div id="resultMatrix"></div>
+                </div>
+
+                <!-- Sammanfattning -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">Sammanfattning</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="font-medium">Mest sannolika resultat:</p>
+                            <p id="mostLikelyResult" class="text-lg font-bold text-blue-700"></p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <p class="font-medium">BTTS (Båda gör mål):</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-gray-100 p-2 rounded">
+                                        <p>Ja: <span id="bttsYes" class="font-bold"></span></p>
+                                    </div>
+                                    <div class="bg-gray-100 p-2 rounded">
+                                        <p>Nej: <span id="bttsNo" class="font-bold"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-medium">Över/Under 2.5 mål:</p>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="bg-gray-100 p-2 rounded">
+                                        <p>Över: <span id="over25" class="font-bold"></span></p>
+                                    </div>
+                                    <div class="bg-gray-100 p-2 rounded">
+                                        <p>Under: <span id="under25" class="font-bold"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="font-medium">1X2 Sannolikheter & Odds:</p>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="bg-gray-100 p-2 rounded">
+                                    <p>1: <span id="home1x2" class="font-bold"></span></p>
+                                    <p>Odds: <span id="homeOdds" class="font-bold"></span></p>
+                                </div>
+                                <div class="bg-gray-100 p-2 rounded">
+                                    <p>X: <span id="draw1x2" class="font-bold"></span></p>
+                                    <p>Odds: <span id="drawOdds" class="font-bold"></span></p>
+                                </div>
+                                <div class="bg-gray-100 p-2 rounded">
+                                    <p>2: <span id="away1x2" class="font-bold"></span></p>
+                                    <p>Odds: <span id="awayOdds" class="font-bold"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="font-medium">Värdebedömning:</p>
+                            <div id="kellyResult" class="bg-blue-50 p-3 rounded-md font-bold"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ändra från "Stapeldiagram" till "Sannolikhetsfördelning" -->
+            <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Sannolikhetsfördelning</h2>
+                <div class="h-80">
+                    <canvas id="resultsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sparade beräkningar (dold från början) -->
+        <div id="savedCalculationsSection" class="hidden bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Sparade beräkningar</h2>
+            <div id="savedCalculationsList" class="space-y-4"></div>
+            <div class="mt-4 flex flex-wrap gap-2">
+                <button id="closeSavedBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 transition">Stäng</button>
+                <button id="exportBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition">Exportera</button>
+                <button id="importBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition">Importera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Popup Component -->
+    <div id="customPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="bg-blue-600 px-4 py-2 flex justify-between items-center">
+                <h3 id="popupTitle" class="text-white font-medium">Meddelande</h3>
+                <button id="popupCloseX" class="text-white hover:text-gray-200 focus:outline-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4">
+                <p id="popupMessage" class="text-gray-700"></p>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 flex justify-end space-x-2">
+                <button id="popupCancelBtn" class="hidden px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400">Avbryt</button>
+                <button id="popupOkBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ta bort all inbäddad JavaScript-kod här och ersätt med: -->
+    <script src="main.js"></script>
+</body>
+</html>
