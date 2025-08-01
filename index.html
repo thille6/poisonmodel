@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fotbollsstatistik & Oddskalkylator</title>
     <!-- Tailwind CSS lokalt -->
-    <link rel="stylesheet" href="./dist/output.css">
+    <link rel="stylesheet" href="dist/output.css">
     <!-- Chart.js för stapeldiagram -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -96,10 +96,12 @@
                 <input type="text" id="calculationTitle" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ange en beskrivande rubrik för beräkningen">
             </div>
             
+            <!-- Behåll endast denna saveBtn i huvudformuläret -->
             <div class="flex justify-center mt-6 space-x-4">
                 <button id="calculateBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition">Beräkna</button>
                 <button id="saveBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition">Spara beräkning</button>
                 <button id="showSavedBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition">Visa sparade</button>
+                <button id="generateAIPromptBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition">🤖 Generera AI-prompt</button>
             </div>
         </div>
 
@@ -171,12 +173,20 @@
                 </div>
             </div>
 
-            <!-- Ändra från "Stapeldiagram" till "Sannolikhetsfördelning" -->
+            <!-- Sannolikhetsfördelning -->
             <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800">Sannolikhetsfördelning</h2>
                 <div class="h-80">
                     <canvas id="resultsChart"></canvas>
                 </div>
+                
+                <!-- Ta bort eller kommentera bort denna del
+                <div class="mt-6 flex flex-wrap gap-4 justify-center">
+                    <button id="generateAIPromptBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 transition hidden">
+                        🤖 Generera AI-prompt
+                    </button>
+                </div>
+                -->
             </div>
         </div>
 
@@ -213,7 +223,6 @@
         </div>
     </div>
 
-    <!-- Ta bort all inbäddad JavaScript-kod här och ersätt med: -->
     <script src="main.js"></script>
 </body>
 </html>

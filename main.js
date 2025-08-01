@@ -61,11 +61,33 @@ const customPopup = {
     }
 };
 
-// Event listeners
-document.getElementById('calculateBtn').addEventListener('click', calculateResults);
-document.getElementById('saveBtn').addEventListener('click', saveCalculation);
-document.getElementById('showSavedBtn').addEventListener('click', showSavedCalculations);
-document.getElementById('closeSavedBtn').addEventListener('click', closeSavedCalculations);
+// Initialize popup
+customPopup.init();
+
+// Event listeners with null checks
+const calculateBtn = document.getElementById('calculateBtn');
+const saveBtn = document.getElementById('saveBtn');
+const showSavedBtn = document.getElementById('showSavedBtn');
+const closeSavedBtn = document.getElementById('closeSavedBtn');
+const generateAIPromptBtn = document.getElementById('generateAIPromptBtn');
+const exportBtn = document.getElementById('exportBtn');
+const importBtn = document.getElementById('importBtn');
+
+// Ta bort dessa rader
+// const saveResultBtn = document.getElementById('saveResultBtn');
+// const saveActionBtn = document.getElementById('saveActionBtn');
+
+if (calculateBtn) calculateBtn.addEventListener('click', calculateResults);
+if (saveBtn) saveBtn.addEventListener('click', saveCalculation);
+if (showSavedBtn) showSavedBtn.addEventListener('click', showSavedCalculations);
+if (closeSavedBtn) closeSavedBtn.addEventListener('click', closeSavedCalculations);
+if (generateAIPromptBtn) generateAIPromptBtn.addEventListener('click', generateCurrentAIPrompt);
+if (exportBtn) exportBtn.addEventListener('click', exportSavedCalculations);
+if (importBtn) importBtn.addEventListener('click', importSavedCalculations);
+
+// Ta bort dessa rader
+// if (saveResultBtn) saveResultBtn.addEventListener('click', saveCalculation);
+// if (saveActionBtn) saveActionBtn.addEventListener('click', saveCalculation);
 
 // Huvudfunktion för beräkningar
 function calculateResults() {
@@ -99,9 +121,9 @@ function calculateResults() {
     }
     
     try {
-        // Beräkna formfaktorer (mål per match / förväntade 1.0)
-        const homeFormFactor = homeForm / 5 / 1.0;
-        const awayFormFactor = awayForm / 5 / 1.0;
+        // Beräkna formfaktorer (normaliserade runt 1.0)
+        const homeFormFactor = homeForm / 5.0;  // Form 1-10 blir 0.2-2.0
+        const awayFormFactor = awayForm / 5.0;  // Form 1-10 blir 0.2-2.0
         
         // Beräkna normaliseringsfaktor baserat på ligasnitt
         const normalizationFactor = leagueAvg / 2.7;
@@ -109,6 +131,13 @@ function calculateResults() {
         // Beräkna lambda1 (hemmalag) och lambda2 (bortalag) med form och normalisering
         const rawLambda1 = ((homeXGF + awayXGA) / 2) * homeFormFactor * normalizationFactor;
         const rawLambda2 = ((awayXGF + homeXGA) / 2) * awayFormFactor * normalizationFactor;
+        
+        // Debug-utskrifter
+        console.log('Debug värden:');
+        console.log('homeFormFactor:', homeFormFactor);
+        console.log('awayFormFactor:', awayFormFactor);
+        console.log('rawLambda1:', rawLambda1);
+        console.log('rawLambda2:', rawLambda2);
 
         // Beräkna resultatmatris med Bivariat Poisson-fördelning
         const resultMatrix = calculateBivariatePoissonMatrix(rawLambda1, rawLambda2, correlation);
@@ -176,8 +205,15 @@ function calculateBivariatePoissonMatrix(homeXG, awayXG, correlation) {
     const lambda3 = correlation * Math.sqrt(homeXG * awayXG);
     
     // Justera lambda1 och lambda2 för att ta hänsyn till kovariansen
-    const lambda1 = homeXG - lambda3;
-    const lambda2 = awayXG - lambda3;
+    // Säkerställ att lambda-värdena förblir positiva
+    const lambda1 = Math.max(0.01, homeXG - lambda3);
+    const lambda2 = Math.max(0.01, awayXG - lambda3);
+    
+    // Debug-utskrifter för att kontrollera värdena
+    console.log('Lambda-värden:');
+    console.log('homeXG:', homeXG, 'awayXG:', awayXG);
+    console.log('lambda3:', lambda3);
+    console.log('lambda1:', lambda1, 'lambda2:', lambda2);
     
     // Beräkna sannolikheten för varje resultat med bivariat Poisson
     for (let homeGoals = 0; homeGoals <= maxGoals; homeGoals++) {
@@ -407,6 +443,36 @@ function updateUI(data) {
     
     // Uppdatera stapeldiagrammet
     updateChart(data.resultMatrix);
+    
+    // Visa resultatsektionen
+    document.getElementById('resultsSection').classList.remove('hidden');
+    
+    // Visa AI-prompt knappen efter beräkning
+    const aiPromptBtn = document.getElementById('generateAIPromptBtn');
+    if (aiPromptBtn) {
+        aiPromptBtn.classList.remove('hidden');
+    }
+    
+    // Spara data globalt för AI-prompt funktionen
+    resultsData = {
+        homeXGF: parseFloat(document.getElementById('homeXGF').value),
+        homeXGA: parseFloat(document.getElementById('homeXGA').value),
+        awayXGF: parseFloat(document.getElementById('awayXGF').value),
+        awayXGA: parseFloat(document.getElementById('awayXGA').value),
+        leagueAvg: parseFloat(document.getElementById('leagueAvg').value),
+        homeForm: parseFloat(document.getElementById('homeForm').value),
+        awayForm: parseFloat(document.getElementById('awayForm').value),
+        correlation: parseFloat(document.getElementById('correlation').value),
+        userOdds: parseFloat(document.getElementById('userOdds').value) || null,
+        betType: document.getElementById('betType').value,
+        outcomes: data.outcomes,
+        mostLikely: data.mostLikely,
+        btts: data.btts,
+        overUnder: data.overUnder,
+        valueIndicator: data.valueIndicator,
+        timestamp: new Date().toLocaleString('sv-SE'),
+        title: 'Aktuell beräkning'
+    };
 }
 
 // Uppdatera resultatmatrisen i UI
@@ -682,7 +748,6 @@ async function saveCalculation() {
 }
 
 // Visa sparade beräkningar
-// Visa sparade beräkningar
 function showSavedCalculations() {
     // Hämta sparade beräkningar från localStorage
     const savedCalculations = JSON.parse(localStorage.getItem('footballCalculations')) || [];
@@ -708,11 +773,11 @@ function showSavedCalculations() {
             else betTypeText = 'Bortavinst (2)';
             
             // Skapa innehåll med titel och information
-            const title = calc.title || 'Beräkning ' + calc.timestamp;
+            const title = calc.title || 'Beräkning ' + (calc.timestamp || new Date().toLocaleString());
             
             calcItem.innerHTML = `
                 <h3 class="font-bold text-lg mb-2">${title}</h3>
-                <p class="text-sm text-gray-600 mb-2">Sparad: ${calc.timestamp}</p>
+                <p class="text-sm text-gray-600 mb-2">Sparad: ${calc.timestamp || new Date().toLocaleString()}</p>
                 <div class="grid grid-cols-2 gap-2 mb-3">
                     <div>
                         <p><span class="font-medium">Hemma xG:</span> ${calc.homeXGF}</p>
@@ -761,10 +826,18 @@ function showSavedCalculations() {
     }
     
     // Visa sektionen med sparade beräkningar och dölj resultatsektionen
-    document.getElementById('savedCalculationsSection').classList.remove('hidden');
-    document.getElementById('savedCalculationsSection').style.display = 'block';
-    document.getElementById('resultsSection').classList.add('hidden');
-    document.getElementById('resultsSection').style.display = 'none'; // Lägg till denna rad
+    const savedSection = document.getElementById('savedCalculationsSection');
+    const resultsSection = document.getElementById('resultsSection');
+    
+    if (savedSection) {
+        savedSection.classList.remove('hidden');
+        savedSection.style.display = 'block';
+    }
+    
+    if (resultsSection) {
+        resultsSection.classList.add('hidden');
+        resultsSection.style.display = 'none';
+    }
 }
 
 // Ladda en sparad beräkning
@@ -814,24 +887,45 @@ async function loadSavedCalculation(index) {
 
 // Stäng sektionen med sparade beräkningar
 function closeSavedCalculations() {
-    document.getElementById('savedCalculationsSection').classList.add('hidden');
-    document.getElementById('savedCalculationsSection').style.display = 'none';
+    const savedSection = document.getElementById('savedCalculationsSection');
+    const resultsSection = document.getElementById('resultsSection');
+    
+    if (savedSection) {
+        savedSection.classList.add('hidden');
+        savedSection.style.display = 'none';
+    }
     
     // Visa resultatsektionen om det finns resultat
-    if (resultsData && Object.keys(resultsData).length > 0) {
-        document.getElementById('resultsSection').classList.remove('hidden');
-        document.getElementById('resultsSection').style.display = 'block';
+    if (resultsData && Object.keys(resultsData).length > 0 && resultsSection) {
+        resultsSection.classList.remove('hidden');
+        resultsSection.style.display = 'block';
     }
 }
 
 // Initiera popup-komponenten när sidan laddas
 window.addEventListener('DOMContentLoaded', function() {
     customPopup.init();
+    
+    // Dölj action buttons från början
+    const actionButtons = document.getElementById('actionButtons');
+    if (actionButtons) {
+        actionButtons.classList.add('hidden');
+    }
+    
     calculateResults();
     
     // Lägg till event listeners för export/import-knappar
-    document.getElementById('exportBtn').addEventListener('click', exportSavedCalculations);
-    document.getElementById('importBtn').addEventListener('click', importSavedCalculations);
+    // const exportBtn = document.getElementById('exportBtn');
+    // const importBtn = document.getElementById('importBtn');
+    
+    // if (exportBtn) exportBtn.addEventListener('click', exportSavedCalculations);
+    // if (importBtn) importBtn.addEventListener('click', importSavedCalculations);
+    
+    // Dölj AI-prompt knappen från början
+    const aiPromptBtn = document.getElementById('generateAIPromptBtn');
+    if (aiPromptBtn) {
+        aiPromptBtn.classList.add('hidden');
+    }
 });
 
 // Radera en sparad beräkning
@@ -991,6 +1085,189 @@ function convertToAIPrompt(index) {
         
         // Lägg till titel och tidsstämpel
         prompt += `Titel: ${calc.title || 'Beräkning'}
+`;
+        prompt += `Tidpunkt: ${calc.timestamp}
+
+`;
+        
+        // Lägg till grundläggande data
+        prompt += `## Grunddata
+`;
+        prompt += `- Hemmalag xG för (xGF): ${calc.homeXGF}
+`;
+        prompt += `- Hemmalag xG emot (xGA): ${calc.homeXGA}
+`;
+        prompt += `- Bortalag xG för (xGF): ${calc.awayXGF}
+`;
+        prompt += `- Bortalag xG emot (xGA): ${calc.awayXGA}
+`;
+        prompt += `- Ligasnitt mål per match: ${calc.leagueAvg}
+`;
+        prompt += `- Hemmalag form (senaste 5 matcher): ${calc.homeForm}
+`;
+        prompt += `- Bortalag form (senaste 5 matcher): ${calc.awayForm}
+`;
+        prompt += `- Korrelation mellan hemma- och bortamål: ${calc.correlation}
+
+`;
+        
+        // Lägg till beräknade sannolikheter
+        prompt += `## Beräknade sannolikheter
+`;
+        prompt += `**VIKTIGT: Dessa odds är beräknade baserat på xG-data och är INTE marknadens odds.**
+`;
+        prompt += `- Hemmavinst: ${(calc.outcomes.home * 100).toFixed(1)}% (beräknat rättvist odds: ${calc.outcomes.homeOdds.toFixed(2)})
+`;
+        prompt += `- Oavgjort: ${(calc.outcomes.draw * 100).toFixed(1)}% (beräknat rättvist odds: ${calc.outcomes.drawOdds.toFixed(2)})
+`;
+        prompt += `- Bortavinst: ${(calc.outcomes.away * 100).toFixed(1)}% (beräknat rättvist odds: ${calc.outcomes.awayOdds.toFixed(2)})
+`;
+        prompt += `
+**Obs:** Dessa odds representerar vad som skulle vara "rättvisa" odds baserat på xG-analys, inte vad spelbolagen erbjuder.
+
+`;
+        
+        // Lägg till mest sannolika resultat
+        prompt += `## Mest sannolika resultat
+`;
+        calc.mostLikely.forEach((result, i) => {
+            prompt += `${i+1}. ${result.homeGoals}-${result.awayGoals} (${(result.probability * 100).toFixed(1)}%)
+`;
+        });
+        prompt += `
+`;
+        
+        // Lägg till BTTS och över/under 2.5 mål
+        prompt += `## Andra marknader
+`;
+        prompt += `- Båda lagen gör mål (BTTS): Ja ${(calc.btts.yes * 100).toFixed(1)}%, Nej ${(calc.btts.no * 100).toFixed(1)}%
+`;
+        prompt += `- Över/Under 2.5 mål: Över ${(calc.overUnder.over * 100).toFixed(1)}%, Under ${(calc.overUnder.under * 100).toFixed(1)}%
+
+`;
+        
+        // Lägg till värdebedömning om användaren har angett odds
+        if (calc.userOdds && calc.userOdds > 1) {
+            prompt += `## Värdebedömning
+`;
+            prompt += `- Speltyp: ${betTypeText}
+`;
+            prompt += `- Användarens odds: ${calc.userOdds.toFixed(2)}
+`;
+            prompt += `- Beräknat rättvist odds: ${calc.valueIndicator.fairOdds.toFixed(2)}
+`;
+            prompt += `- Värdeindikator: ${calc.valueIndicator.valuePercentage.toFixed(1)}%
+
+`;
+        }
+        
+        // Lägg till frågor för AI:n
+        prompt += `Baserat på denna data, vänligen analysera:
+`;
+        prompt += `1. Vilka är de viktigaste insikterna från denna beräkning?
+`;
+        prompt += `2. Finns det några intressanta mönster eller avvikelser i sannolikheterna?
+`;
+        prompt += `3. Vilka spel skulle du rekommendera baserat på denna analys och varför?
+`;
+        prompt += `4. Finns det några andra faktorer som bör beaktas utöver xG-data?
+`;
+        
+        // Kopiera till urklipp
+        navigator.clipboard.writeText(prompt)
+            .then(() => {
+                alert('AI-prompt har kopierats till urklipp! Du kan nu klistra in den i en AI-chat.');
+            })
+            .catch(err => {
+                console.error('Kunde inte kopiera till urklipp:', err);
+                
+                // Visa prompt i en modal om kopiering misslyckas
+                const modal = document.createElement('div');
+                modal.style.position = 'fixed';
+                modal.style.top = '0';
+                modal.style.left = '0';
+                modal.style.width = '100%';
+                modal.style.height = '100%';
+                modal.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                modal.style.zIndex = '1000';
+                modal.style.display = 'flex';
+                modal.style.justifyContent = 'center';
+                modal.style.alignItems = 'center';
+                
+                const content = document.createElement('div');
+                content.style.backgroundColor = 'white';
+                content.style.padding = '20px';
+                content.style.borderRadius = '5px';
+                content.style.maxWidth = '80%';
+                content.style.maxHeight = '80%';
+                content.style.overflow = 'auto';
+                
+                const header = document.createElement('div');
+                header.style.display = 'flex';
+                header.style.justifyContent = 'space-between';
+                header.style.marginBottom = '10px';
+                
+                const title = document.createElement('h3');
+                title.textContent = 'AI-prompt (kopiera denna text)';
+                title.style.margin = '0';
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = 'Stäng';
+                closeBtn.style.padding = '5px 10px';
+                closeBtn.style.backgroundColor = '#f44336';
+                closeBtn.style.color = 'white';
+                closeBtn.style.border = 'none';
+                closeBtn.style.borderRadius = '3px';
+                closeBtn.style.cursor = 'pointer';
+                closeBtn.onclick = () => document.body.removeChild(modal);
+                
+                header.appendChild(title);
+                header.appendChild(closeBtn);
+                
+                const textarea = document.createElement('textarea');
+                textarea.value = prompt;
+                textarea.style.width = '100%';
+                textarea.style.height = '300px';
+                textarea.style.padding = '10px';
+                textarea.style.marginTop = '10px';
+                textarea.style.boxSizing = 'border-box';
+                
+                content.appendChild(header);
+                content.appendChild(textarea);
+                modal.appendChild(content);
+                
+                document.body.appendChild(modal);
+            });
+        
+    } catch (error) {
+        console.error('Fel vid skapande av AI-prompt:', error);
+        alert('Ett fel uppstod vid skapande av AI-prompt.');
+    }
+}
+
+// Funktion för att generera AI-prompt för aktuell beräkning
+function generateCurrentAIPrompt() {
+    if (!resultsData || Object.keys(resultsData).length === 0) {
+        alert('Ingen beräkning att generera prompt för. Gör en beräkning först.');
+        return;
+    }
+    
+    try {
+        const calc = resultsData;
+        
+        // Formatera bettyp för visning
+        let betTypeText = '';
+        if (calc.betType === 'home') betTypeText = 'Hemmavinst (1)';
+        else if (calc.betType === 'draw') betTypeText = 'Oavgjort (X)';
+        else betTypeText = 'Bortavinst (2)';
+        
+        // Skapa en formaterad prompt för AI-analys
+        let prompt = `Analysera följande fotbollsmatchberäkning baserad på Expected Goals (xG) data:
+
+`;
+        
+        // Lägg till titel och tidsstämpel
+        prompt += `Titel: ${calc.title || 'Aktuell beräkning'}
 `;
         prompt += `Tidpunkt: ${calc.timestamp}
 
