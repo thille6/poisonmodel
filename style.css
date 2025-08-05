@@ -1,0 +1,187 @@
+/* Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Stilar för resultatmatrisen */
+.grid-results {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 2px;
+    margin-top: 10px;
+}
+
+/* Stilar för celler i resultatmatrisen */
+.grid-cell {
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Stilar för resultatpoäng i celler */
+.result-score {
+    font-size: 0.75rem;
+    color: inherit;
+    margin-top: 2px;
+}
+
+/* Stilar för rubrikceller */
+.header-cell {
+    font-weight: bold;
+    background-color: #e0e7ff;
+}
+
+/* Stilar för förklaringar */
+.matrix-explanation {
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.matrix-legend {
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* Responsiva justeringar för mindre skärmar */
+@media (max-width: 640px) {
+    .grid-results {
+        grid-template-columns: repeat(6, 1fr);
+        font-size: 0.8rem;
+    }
+    
+    .grid-cell {
+        padding: 3px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Stilar för formulärsektioner */
+.form-section {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1.5rem;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+/* Denna fil är tom eftersom all CSS-kod är inbäddad i index.html via Tailwind CSS */
+/* och några få custom styles i style-taggen enligt kravet att allt ska ligga i en HTML-fil. */
+
+/* Lägg till dessa stilar i slutet av din CSS-fil */
+#resultsChart {
+    display: none; /* Dölj canvas-elementet eftersom vi använder en tabell istället */
+}
+
+/* Stilar för tabellen */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+    font-weight: 600;
+    background-color: #f3f4f6;
+}
+
+tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+
+/* Förbättrad responsivitet för mobila enheter */
+@media (max-width: 768px) {
+    .container {
+        padding: 12px;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+    
+    .grid-results {
+        grid-template-columns: repeat(5, 1fr);
+    }
+    
+    .grid-cell {
+        padding: 4px 2px;
+        font-size: 0.75rem;
+    }
+    
+    .result-score {
+        font-size: 0.65rem;
+    }
+    
+    button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    
+    table {
+        font-size: 0.875rem;
+    }
+    
+    canvas {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid-results {
+        grid-template-columns: repeat(4, 1fr);
+        font-size: 0.7rem;
+    }
+    
+    input, select {
+        font-size: 0.875rem;
+    }
+    
+    .form-section {
+        margin-bottom: 1rem;
+    }
+}
+
+.ai-prompt-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ai-prompt-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    max-width: 80%;
+    max-height: 80%;
+    overflow: auto;
+}
+
+/* Fler klasser för övriga element */
