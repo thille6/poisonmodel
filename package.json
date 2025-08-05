@@ -1,0 +1,22 @@
+{
+  "name": "poison-model",
+  "version": "1.0.0",
+  "description": "Football statistics calculator",
+  "scripts": {
+    "build": "mkdir dist 2>NUL & npx tailwindcss -i ./style.css -o ./dist/output.css & copy index.html dist\\ & copy *.js dist\\ & copy style.css dist\\ & copy favicon.svg dist\\",
+    "watch": "npx tailwindcss -i ./style.css -o ./dist/output.css --watch",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/cli": "^7.4.2",
+    "@capacitor/core": "^7.4.2"
+  }
+}
