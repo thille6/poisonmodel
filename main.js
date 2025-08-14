@@ -1,5 +1,5 @@
 // Globala variabler för att lagra beräkningsresultat
-let resultsChart = null;
+// resultsChart deklareras nu i window-objektet istället för lokalt
 
 // Custom popup funktioner
 const customPopup = {

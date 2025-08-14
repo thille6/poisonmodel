@@ -19,7 +19,26 @@ function simplePoissonProbability(k, lambda) {
 
 // Bivariate Poisson matrix using three-parameter model
 function calculateBivariatePoissonMatrix(homeXG, awayXG, correlation) {
-    const maxGoals = 10; // Öka till 10 för bättre täckning med låga lambdas
+    // Dynamiskt justera maxGoals baserat på xG-värden
+    // För låga xG-värden räcker det med färre mål, för höga xG behövs fler
+    const totalXG = homeXG + awayXG;
+    let maxGoals;
+    
+    if (totalXG < 2) {
+        maxGoals = 6; // Låga xG-värden
+    } else if (totalXG < 4) {
+        maxGoals = 8; // Medelhöga xG-värden
+    } else if (totalXG < 6) {
+        maxGoals = 10; // Höga xG-värden
+    } else {
+        maxGoals = 12; // Mycket höga xG-värden
+    }
+    
+    // Säkerställ att maxGoals aldrig är mindre än 6
+    maxGoals = Math.max(6, maxGoals);
+    
+    console.log('Dynamiskt maxGoals:', maxGoals, 'baserat på totalXG:', totalXG);
+    
     correlation = Math.max(0, Math.min(1, correlation)); // Clamp to 0-1 for this model
     const lambda1 = homeXG * (1 - correlation);
     const lambda2 = awayXG * (1 - correlation);
@@ -32,9 +51,23 @@ function calculateBivariatePoissonMatrix(homeXG, awayXG, correlation) {
     const matrix = [];
     let totalProb = 0;
 
+    // Optimera beräkningen genom att bara beräkna sannolikheter för relevanta målantal
+    // Använd en cutoff-sannolikhet för att hoppa över osannolika resultat
+    const cutoffProb = 1e-6; // Hoppa över resultat med extremt låg sannolikhet
+    
     for (let h = 0; h <= maxGoals; h++) {
         const row = [];
         for (let a = 0; a <= maxGoals; a++) {
+            // Snabb kontroll om resultatet är osannolikt baserat på Poisson-fördelningen
+            const simpleHomeProb = simplePoissonProbability(h, homeXG);
+            const simpleAwayProb = simplePoissonProbability(a, awayXG);
+            
+            // Om både hem- och bortasannolikheterna är extremt låga, sätt sannolikheten till 0
+            if (simpleHomeProb < cutoffProb && simpleAwayProb < cutoffProb) {
+                row.push({ homeGoals: h, awayGoals: a, probability: 0 });
+                continue;
+            }
+            
             let sumTerms = 0;
             for (let i = 0; i <= Math.min(h, a); i++) {
                 const term = simplePoissonProbability(h - i, safeLambda1) *
@@ -161,8 +194,28 @@ function calculateResults() {
         const overUnder = calculateOverUnder25(resultMatrix);
         const valueIndicator = userOdds > 0 ? calculateValueIndicator(outcomes, userOdds, betType) : null;
 
-        // Spara i resultsData
-        resultsData = { matrix: resultMatrix, outcomes, btts, overUnder, valueIndicator };
+        // Spara i resultsData med alla inputvärden
+        resultsData = { 
+            matrix: resultMatrix, 
+            outcomes, 
+            btts, 
+            overUnder, 
+            valueIndicator,
+            betType,
+            // Spara alla inputvärden för återladdning
+            inputs: {
+                homeXGF: parseFloat(document.getElementById('homeXGF').value) || 1.0,
+                homeXGA: parseFloat(document.getElementById('homeXGA').value) || 1.0,
+                awayXGF: parseFloat(document.getElementById('awayXGF').value) || 1.0,
+                awayXGA: parseFloat(document.getElementById('awayXGA').value) || 1.0,
+                leagueAvg,
+                homeForm,
+                awayForm,
+                correlation: parseFloat(document.getElementById('correlation').value) || 0.4,
+                userOdds,
+                betType
+            }
+        };
 
         // Uppdatera UI (anropa från ui.js, antar att updateUI är definierad där)
         updateUI(resultsData);

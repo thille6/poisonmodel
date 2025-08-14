@@ -1,7 +1,8 @@
 /* Tailwind directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Import Tailwind base styles */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 /* Stilar för resultatmatrisen */
 .grid-results {

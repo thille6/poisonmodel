@@ -11,7 +11,28 @@ function saveCalculation() {
         return;
     }
     const saved = JSON.parse(localStorage.getItem('savedCalculations') || '[]');
-    saved.push({ title, data: window.currentCalculation });
+
+    // Säkerställ att vi sparar även formulärens inputvärden
+    const dataToSave = { ...window.currentCalculation };
+    if (!dataToSave.inputs) {
+        dataToSave.inputs = {
+            homeXGF: parseFloat(document.getElementById('homeXGF')?.value) || 1.0,
+            homeXGA: parseFloat(document.getElementById('homeXGA')?.value) || 1.0,
+            awayXGF: parseFloat(document.getElementById('awayXGF')?.value) || 1.0,
+            awayXGA: parseFloat(document.getElementById('awayXGA')?.value) || 1.0,
+            leagueAvg: parseFloat(document.getElementById('leagueAvg')?.value) || 2.7,
+            homeForm: parseFloat(document.getElementById('homeForm')?.value) || 0,
+            awayForm: parseFloat(document.getElementById('awayForm')?.value) || 0,
+            correlation: parseFloat(document.getElementById('correlation')?.value) || 0.4,
+            userOdds: parseFloat(document.getElementById('userOdds')?.value) || 0,
+            betType: document.getElementById('betType')?.value || 'home'
+        };
+    }
+    if (!dataToSave.betType && dataToSave.inputs?.betType) {
+        dataToSave.betType = dataToSave.inputs.betType;
+    }
+
+    saved.push({ title, data: dataToSave });
     localStorage.setItem('savedCalculations', JSON.stringify(saved));
     customPopup.alert('Beräkning sparad!');
 }
@@ -47,7 +68,29 @@ function loadSavedCalculation(index) {
     const saved = JSON.parse(localStorage.getItem('savedCalculations') || '[]');
     const item = saved[index];
     if (item) {
-        updateUI(item.data);
+        const data = item.data || {};
+
+        // Om det finns sparade inputvärden, återställ dem i formuläret
+        if (data.inputs) {
+            const i = data.inputs;
+            if (document.getElementById('homeXGF')) document.getElementById('homeXGF').value = i.homeXGF ?? '';
+            if (document.getElementById('homeXGA')) document.getElementById('homeXGA').value = i.homeXGA ?? '';
+            if (document.getElementById('awayXGF')) document.getElementById('awayXGF').value = i.awayXGF ?? '';
+            if (document.getElementById('awayXGA')) document.getElementById('awayXGA').value = i.awayXGA ?? '';
+            if (document.getElementById('leagueAvg')) document.getElementById('leagueAvg').value = i.leagueAvg ?? '';
+            if (document.getElementById('homeForm')) document.getElementById('homeForm').value = i.homeForm ?? '';
+            if (document.getElementById('awayForm')) document.getElementById('awayForm').value = i.awayForm ?? '';
+            if (document.getElementById('correlation')) document.getElementById('correlation').value = i.correlation ?? '';
+            if (document.getElementById('userOdds')) document.getElementById('userOdds').value = i.userOdds ?? '';
+            if (document.getElementById('betType')) document.getElementById('betType').value = i.betType ?? 'home';
+            if (!data.betType && i.betType) data.betType = i.betType;
+        } else if (data.betType && document.getElementById('betType')) {
+            // Fallback: sätt åtminstone speltyp
+            document.getElementById('betType').value = data.betType;
+        }
+
+        // Uppdatera UI direkt med sparad data
+        updateUI(data);
         document.getElementById('resultsSection').classList.remove('hidden');
         document.getElementById('generateAIPromptBtn').classList.remove('hidden');
         closeSavedCalculations();
