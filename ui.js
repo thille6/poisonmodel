@@ -116,9 +116,16 @@ function updateChartAndTopResults(matrix) {
     // Total goals chart
     const ctx = document.getElementById('totalGoalsChart');
     if (ctx) {
+        // Förstör befintligt diagram om det finns för att undvika "Canvas is already in use"-fel
+        if (window.resultsChart) {
+            window.resultsChart.destroy();
+        }
+        
         const chartLabels = Object.keys(totalGoalsProb).sort((a,b) => a - b);
         const chartData = chartLabels.map(label => (totalGoalsProb[label] * 100).toFixed(1));
-        new Chart(ctx, {
+        
+        // Spara referens till det nya diagrammet i en global variabel
+        window.resultsChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: chartLabels,
@@ -175,7 +182,13 @@ function updateChartAndTopResults(matrix) {
             topTableBody.appendChild(row);
         });
 
-        // Add color explanation
+        // Ta bort befintlig caption om den finns
+        const existingCaption = document.querySelector('#topResultsTable caption');
+        if (existingCaption) {
+            existingCaption.remove();
+        }
+
+        // Lägg till färgförklaring
         const colorExplanation = document.createElement('caption');
         colorExplanation.className = 'text-sm text-gray-600 mt-2';
         colorExplanation.innerHTML = 'Färger: <span class="bg-green-100 px-2">Grön</span> = Hemmavinst, <span class="bg-yellow-100 px-2">Gul</span> = Oavgjort, <span class="bg-red-100 px-2">Röd</span> = Bortavinst';
